@@ -1,0 +1,25 @@
+{
+ "pages": [
+  {
+   "slug": "privacy-policy",
+   "title": "Privacy Policy",
+   "footer": true,
+   "updated": "2026-10-21",
+   "content": "# Privacy Policy\n\nThis is a starter template. Have it reviewed for your country before launch.\n\n## What we collect\n\nWe do not require accounts. Ad partners may use cookies to show ads. You can choose generic ads in the consent banner.\n\n## Contact\n\nWrite to the address shown in our takedown page."
+  },
+  {
+   "slug": "takedown",
+   "title": "Takedown requests",
+   "footer": true,
+   "updated": "2026-10-21",
+   "content": "# Takedown requests\n\nIf you are the author of a file listed here and want it removed, send us the link and proof of ownership. We remove confirmed requests promptly."
+  },
+  {
+   "slug": "about",
+   "title": "About",
+   "footer": true,
+   "updated": "2026-10-21",
+   "content": "# About BlockVault\n\nA free library of Minecraft mods and addons, **checked before listing**."
+  }
+ ]
+}

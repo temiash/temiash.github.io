@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>BlockVault Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<link rel="stylesheet" href="css/markdown.css">
+<link rel="stylesheet" href="css/admin.css">
+<script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script defer crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<script defer src="js/markdown.js"></script>
+<script defer src="js/admin.js"></script>
+</head>
+<body>
+<!-- ============ CONNECT ============ -->
+<section id="login" class="max-w-md mx-auto p-6 mt-12">
+  <h1 class="text-3xl font-bold">BlockVault Admin</h1>
+  <p class="text-sm text-gray-400 mt-2">Connect with a GitHub token. Every change is saved to your repository as JSON, and the store reads it from there. No server needed.</p>
+  <div class="panel p-5 mt-5 space-y-3">
+    <label class="block text-sm">GitHub username or organisation<input id="o" class="in mt-1" autocomplete="off"></label>
+    <label class="block text-sm">Repository name<input id="r" class="in mt-1" autocomplete="off"></label>
+    <label class="block text-sm">Branch<input id="b" class="in mt-1" value="main"></label>
+    <label class="block text-sm">Fine-grained token<input id="t" type="password" class="in mt-1" autocomplete="off"></label>
+    <label class="flex gap-2 text-sm text-gray-300"><input id="rem" type="checkbox"> Remember on this device</label>
+    <p id="lerr" class="text-sm text-red-400" role="alert"></p>
+    <button id="go" class="btn w-full">Connect</button>
+  </div>
+  <p class="text-xs text-gray-500 mt-4">Create the token in GitHub: Settings, Developer settings, Fine-grained tokens. Select only this repository and set Contents to Read and write. Without the token this page can change nothing.</p>
+</section>
+
+<div id="app" class="hidden"><div class="wp">
+  <aside class="side">
+    <div class="brandrow">⛏️ BlockVault</div>
+    <nav>
+      <button class="tab" data-tab="dash">Dashboard</button><button class="tab" data-tab="addons">Addons</button><button class="tab" data-tab="pages">Pages</button>
+      <button class="tab" data-tab="config">Settings and ads</button><button class="tab" data-tab="raw">Raw JSON</button><button class="tab" data-tab="history">History</button>
+    </nav>
+    <div id="repo" class="repo"></div>
+  </aside>
+  <div>
+    <header class="topbar">
+      <h1 id="pageTitle" class="text-xl font-bold"></h1>
+      <a class="ghost ml-auto" href="index.html?preview=1" target="_blank">View store</a>
+      <input id="msg" class="in" style="max-width:240px" placeholder="Commit message (optional)" aria-label="Commit message">
+      <button id="pub" class="btn" disabled>Nothing to publish</button><button id="out" class="ghost">Disconnect</button>
+    </header>
+    <main class="content">
+      <section data-pane="dash" class="space-y-5">
+        <div id="stats" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="panel p-4"><h3 class="font-bold mb-2">Recently updated</h3><ul id="recent" class="text-sm"></ul></div>
+          <div class="panel p-4"><h3 class="font-bold mb-2">Launch checklist</h3><ul id="todo" class="text-sm"></ul></div>
+        </div>
+        <div class="panel p-4 flex flex-wrap gap-2"><button class="btn" data-tab="addons">Manage addons</button><button class="ghost" data-tab="pages">Write a page</button><button class="ghost" data-tab="config">Open settings</button></div>
+      </section>
+
+      <section data-pane="addons">
+        <div class="flex flex-wrap gap-2 mb-3">
+          <input id="q" class="in" style="max-width:260px" placeholder="Search addons" aria-label="Search addons"><button id="add" class="btn">Add addon</button>
+          <label class="ghost cursor-pointer">Import JSON<input id="imp" type="file" accept=".json,application/json" class="hidden"></label><button id="exp" class="ghost">Export JSON</button>
+        </div>
+        <div class="panel overflow-x-auto"><table class="w-full text-sm"><thead><tr><th>Addon</th><th>Category</th><th>Version</th><th>Downloads</th><th>Rating</th><th>Verified</th><th>Featured</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+      </section>
+
+      <section data-pane="pages">
+        <div class="mb-3"><button id="addp" class="btn">Add page</button></div>
+        <div class="panel overflow-x-auto"><table class="w-full text-sm"><thead><tr><th>Title</th><th>Link</th><th>In footer</th><th>Updated</th><th></th></tr></thead><tbody id="prows"></tbody></table></div>
+      </section>
+
+      <section data-pane="config"><div id="cfg" class="panel p-5 grid sm:grid-cols-2 gap-3"></div><p class="text-xs text-gray-500 mt-2">Empty fields use the store's defaults. Changes go live after you press Publish.</p></section>
+
+      <section data-pane="raw" class="grid lg:grid-cols-3 gap-4">
+        <div><h3 class="font-bold mb-1">data/addons.json</h3><textarea id="raw_addons" rows="18" class="in font-mono text-xs" spellcheck="false"></textarea><button class="ghost mt-2" data-act="raw" data-k="addons">Apply</button></div>
+        <div><h3 class="font-bold mb-1">data/config.json</h3><textarea id="raw_config" rows="18" class="in font-mono text-xs" spellcheck="false"></textarea><button class="ghost mt-2" data-act="raw" data-k="config">Apply</button></div>
+        <div><h3 class="font-bold mb-1">data/pages.json</h3><textarea id="raw_pages" rows="18" class="in font-mono text-xs" spellcheck="false"></textarea><button class="ghost mt-2" data-act="raw" data-k="pages">Apply</button></div>
+      </section>
+
+      <section data-pane="history"><div id="hist"></div></section>
+    </main>
+  </div>
+</div></div>
+
+<div id="form" class="fixed inset-0 z-40 hidden bg-black/80 overflow-y-auto p-4" role="dialog" aria-modal="true" aria-labelledby="ftitle">
+  <div class="panel bg-[#0d1116] max-w-4xl mx-auto p-5">
+    <div class="flex justify-between mb-4"><h2 id="ftitle" class="text-xl font-bold"></h2><button id="fx" class="ghost" aria-label="Close">✕</button></div>
+    <div id="fbody" class="grid sm:grid-cols-2 gap-3"></div>
+    <p id="ferr" class="text-sm text-red-400 mt-3" role="alert"></p>
+    <div class="flex justify-end gap-2 mt-3"><button id="fc" class="ghost">Cancel</button><button id="fs" class="btn">Save</button></div>
+  </div>
+</div>
+<div id="toast" class="hidden" role="status"></div>
+</body>
+</html>

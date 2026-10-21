@@ -1,0 +1,19 @@
+  :root{--em:#00ff66;--bg:#090b0e;--line:rgba(255,255,255,.09)}
+  body{background:radial-gradient(900px 420px at 78% -8%,rgba(0,255,102,.10),transparent 70%),var(--bg);color:#e8eef2;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+  h1,h2,h3,.brand{font-family:"Chakra Petch",system-ui,sans-serif}
+  .glass{background:rgba(255,255,255,.045);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+  .card{border-radius:6px;transition:transform .2s,border-color .2s,box-shadow .2s}
+  .card:hover{transform:translateY(-3px);border-color:rgba(0,255,102,.55);box-shadow:0 14px 36px -14px rgba(0,255,102,.4)}
+  /* Blocky bevelled buttons: the one signature detail of the design */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;font-weight:700;color:#04120a;background:var(--em);border-radius:4px;padding:.6rem 1rem;box-shadow:inset 0 -4px 0 rgba(0,0,0,.28),inset 0 2px 0 rgba(255,255,255,.35);transition:filter .15s,transform .1s}
+  .btn:hover{filter:brightness(1.1)}.btn:active{transform:translateY(2px);box-shadow:inset 0 -2px 0 rgba(0,0,0,.28)}
+  .btn[disabled],.btn[aria-disabled=true]{background:#2a3138;color:#8a96a0;cursor:not-allowed;filter:none;box-shadow:inset 0 -4px 0 rgba(0,0,0,.35)}
+  .ghost{border:1px solid var(--line);border-radius:4px;padding:.5rem .8rem;background:rgba(255,255,255,.04);transition:border-color .15s}
+  .ghost:hover,.ghost:focus-visible,.ghost[aria-pressed=true]{border-color:var(--em)}.ghost[aria-pressed=true]{color:var(--em)}
+  .slot{border:1px dashed rgba(255,255,255,.18);background:repeating-linear-gradient(45deg,rgba(255,255,255,.02) 0 10px,transparent 10px 20px);display:grid;place-items:center;color:#7d8891;font-size:12px;text-align:center}
+  .stat{border-radius:4px;background:#14181d;border:2px solid #05070a;box-shadow:inset 2px 2px 0 rgba(255,255,255,.1),inset -2px -2px 0 rgba(0,0,0,.5)}
+  .sk{background:linear-gradient(90deg,#12161b,#1b2128,#12161b);background-size:200% 100%;animation:sk 1.2s infinite}
+  @keyframes sk{to{background-position:-200% 0}}
+  :focus-visible{outline:2px solid var(--em);outline-offset:2px}
+  details>summary{list-style:none;cursor:pointer}details>summary::-webkit-details-marker{display:none}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

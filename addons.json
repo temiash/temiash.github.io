@@ -1,0 +1,194 @@
+{
+ "addons": [
+  {
+   "id": "dragon-riders",
+   "title": "Dragon Riders",
+   "author": "AshenForge",
+   "version": "2.4.1",
+   "mc": "1.21",
+   "category": "addon",
+   "downloads": 1840000,
+   "rating": 4.8,
+   "tags": [
+    "mobs",
+    "adventure"
+   ],
+   "verified": true,
+   "updated": "2026-10-12",
+   "thumb": "",
+   "download": "https://example.com/files/dragon-riders.mcaddon",
+   "description": "Tame, breed and ride dragons across the Overworld, with new mounts, armor and sky structures.",
+   "changelog": [
+    "Compatibility update for Minecraft 1.21",
+    "Performance and stability fixes"
+   ],
+   "featured": true,
+   "content": "## Features\n\n- Tame and breed **six dragon species**\n- Craft saddles and armor\n- Explore new sky structures\n\n## Install\n\n1. Download the `.mcaddon` file\n2. Open it with Minecraft\n3. Enable both packs in your world\n\n> Bedrock needs experimental features turned on.\n\nSupport: [issue tracker](https://github.com)"
+  },
+  {
+   "id": "create-machines",
+   "title": "Create: Machines",
+   "author": "GearWright",
+   "version": "0.9.7",
+   "mc": "1.20.6",
+   "category": "mod",
+   "downloads": 3210000,
+   "rating": 4.9,
+   "tags": [
+    "tech",
+    "automation"
+   ],
+   "verified": true,
+   "updated": "2026-10-18",
+   "thumb": "",
+   "download": "https://example.com/files/create-machines.jar",
+   "description": "Build conveyor lines, drills and assembly machines to automate your base.",
+   "changelog": [
+    "Compatibility update for Minecraft 1.20.6",
+    "Performance and stability fixes"
+   ],
+   "featured": true,
+   "content": "## What it adds\n\nConveyor belts, drills and assembly lines.\n\n| Machine | Purpose |\n|---|---|\n| Drill | Mines ore automatically |\n| Assembler | Crafts items from a recipe |\n\nRequires **Java 21**."
+  },
+  {
+   "id": "lumen-shaders",
+   "title": "Lumen Shaders",
+   "author": "PixelDawn",
+   "version": "5.0",
+   "mc": "1.21",
+   "category": "shader",
+   "downloads": 960000,
+   "rating": 4.7,
+   "tags": [
+    "lighting",
+    "ray-tracing"
+   ],
+   "verified": true,
+   "updated": "2026-09-30",
+   "thumb": "",
+   "download": "https://example.com/files/lumen.zip",
+   "description": "Realistic lighting, soft shadows and water reflections tuned for mid-range GPUs.",
+   "changelog": [
+    "Compatibility update for Minecraft 1.21",
+    "Performance and stability fixes"
+   ],
+   "featured": true,
+   "edition": "java"
+  },
+  {
+   "id": "crisp-16x",
+   "title": "Crisp 16x",
+   "author": "Vanta",
+   "version": "3.2",
+   "mc": "1.21",
+   "category": "texture",
+   "downloads": 702000,
+   "rating": 4.6,
+   "tags": [
+    "16x",
+    "vanilla+"
+   ],
+   "verified": false,
+   "updated": "2026-08-21",
+   "thumb": "",
+   "download": "https://example.com/files/crisp.mcpack",
+   "description": "A clean 16x pack that keeps the vanilla look with sharper blocks and calmer colours.",
+   "changelog": [
+    "Compatibility update for Minecraft 1.21",
+    "Performance and stability fixes"
+   ],
+   "edition": "java"
+  },
+  {
+   "id": "sunken-citadel",
+   "title": "Sunken Citadel",
+   "author": "TideMason",
+   "version": "1.3",
+   "mc": "1.21",
+   "category": "map",
+   "downloads": 415000,
+   "rating": 4.5,
+   "tags": [
+    "adventure",
+    "parkour"
+   ],
+   "verified": true,
+   "updated": "2026-07-04",
+   "thumb": "",
+   "download": "https://example.com/files/citadel.mcworld",
+   "description": "An underwater parkour and puzzle map with three boss rooms, best with 1 to 4 players.",
+   "changelog": [
+    "Compatibility update for Minecraft 1.21",
+    "Performance and stability fixes"
+   ]
+  },
+  {
+   "id": "better-villagers",
+   "title": "Better Villagers",
+   "author": "OakAndIron",
+   "version": "1.8.2",
+   "mc": "1.20.6",
+   "category": "mod",
+   "downloads": 1290000,
+   "rating": 4.4,
+   "tags": [
+    "trading",
+    "qol"
+   ],
+   "verified": true,
+   "updated": "2026-10-02",
+   "thumb": "",
+   "download": "https://example.com/files/villagers.jar",
+   "description": "Smarter villager trades, new professions and a clearer trading screen.",
+   "changelog": [
+    "Compatibility update for Minecraft 1.20.6",
+    "Performance and stability fixes"
+   ]
+  },
+  {
+   "id": "nether-expanded",
+   "title": "Nether Expanded",
+   "author": "EmberCrew",
+   "version": "4.1",
+   "mc": "1.21",
+   "category": "addon",
+   "downloads": 880000,
+   "rating": 4.6,
+   "tags": [
+    "biomes",
+    "structures"
+   ],
+   "verified": true,
+   "updated": "2026-09-11",
+   "thumb": "",
+   "download": "https://example.com/files/nether.mcaddon",
+   "description": "Adds six Nether biomes, new structures and mobs without changing vanilla progression.",
+   "changelog": [
+    "Compatibility update for Minecraft 1.21",
+    "Performance and stability fixes"
+   ]
+  },
+  {
+   "id": "neon-skins",
+   "title": "Neon Skin Pack",
+   "author": "Glitchline",
+   "version": "1.0",
+   "mc": "any",
+   "category": "skin",
+   "downloads": 233000,
+   "rating": 4.2,
+   "tags": [
+    "cosmetic"
+   ],
+   "verified": false,
+   "updated": "2026-06-15",
+   "thumb": "",
+   "download": "https://example.com/files/neon.mcpack",
+   "description": "Twenty glowing character skins that work on any version of the game.",
+   "changelog": [
+    "Added new skins",
+    "Performance and stability fixes"
+   ]
+  }
+ ]
+}

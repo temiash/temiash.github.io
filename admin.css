@@ -1,0 +1,25 @@
+:root{--em:#00ff66;--line:rgba(255,255,255,.09)}
+body{background:#090b0e;color:#e8eef2;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,h2,h3,.brandrow{font-family:"Chakra Petch",system-ui,sans-serif}
+.panel{background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:#04120a;background:var(--em);border-radius:4px;padding:.55rem 1rem;box-shadow:inset 0 -4px 0 rgba(0,0,0,.28),inset 0 2px 0 rgba(255,255,255,.35)}
+.btn:hover{filter:brightness(1.1)}.btn[disabled]{background:#2a3138;color:#8a96a0;cursor:not-allowed;filter:none}
+.ghost{border:1px solid rgba(255,255,255,.12);border-radius:4px;padding:.4rem .75rem;font-size:.875rem;background:rgba(255,255,255,.04)}.ghost:hover,.ghost:focus-visible{border-color:var(--em)}
+.in{width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.12);border-radius:4px;padding:.45rem .6rem;font-size:.875rem}
+.in:focus,:focus-visible{border-color:var(--em);outline:2px solid var(--em);outline-offset:1px}
+th{text-align:left;font-weight:600;color:#9aa6b0;padding:.5rem}td{padding:.5rem;border-top:1px solid rgba(255,255,255,.07);vertical-align:middle}
+/* WordPress-style shell */
+.wp{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+.side{background:#0d1116;border-right:1px solid var(--line);padding:1rem .6rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brandrow{font-weight:700;font-size:1.15rem;padding:.4rem .7rem 1rem}.repo{font-size:.7rem;color:#6b7782;padding:1rem .7rem;word-break:break-all}
+.tab{display:block;width:100%;text-align:left;padding:.55rem .8rem;border-radius:4px;color:#b8c2ca;font-size:.9rem;border-left:3px solid transparent}
+.tab:hover{background:rgba(255,255,255,.05);color:#fff}.tab[aria-selected=true]{background:rgba(0,255,102,.1);color:var(--em);border-left-color:var(--em)}
+.topbar{position:sticky;top:0;z-index:30;display:flex;flex-wrap:wrap;align-items:center;gap:.7rem;padding:.7rem 1.2rem;background:rgba(9,11,14,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.content{padding:1.4rem;max-width:1150px}
+/* Markdown editor */
+.mded{border:1px solid var(--line);border-radius:4px;margin-top:.3rem}.mdbar{display:flex;flex-wrap:wrap;gap:.3rem;padding:.4rem;border-bottom:1px solid var(--line);background:rgba(255,255,255,.03)}
+.mdbar .ghost{padding:.25rem .55rem;font-size:.8rem}.grow{flex:1}
+.mdpane{display:grid;grid-template-columns:1fr 1fr}.mdta{border:0;border-radius:0;min-height:320px;font-family:ui-monospace,Menlo,monospace;font-size:.82rem;resize:vertical}
+.mdprev{padding:.8rem;overflow:auto;max-height:440px;border-left:1px solid var(--line);background:rgba(0,0,0,.25)}
+.mded.only .mdta{display:none}.mded.only .mdpane{grid-template-columns:1fr}.mded.only .mdprev{border-left:0}
+@media(max-width:900px){.wp{display:block}.side{position:static;height:auto;display:flex;overflow-x:auto;gap:.3rem;padding:.5rem}.brandrow,.repo{display:none}.tab{width:auto;white-space:nowrap}.mdpane{grid-template-columns:1fr}.mdprev{border-left:0;border-top:1px solid var(--line)}}

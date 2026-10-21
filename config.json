@@ -1,0 +1,9 @@
+{
+ "siteName": "BlockVault",
+ "announcement": "",
+ "maintenance": false,
+ "wallSeconds": 5,
+ "nativeAdEvery": 6,
+ "pageSize": 12,
+ "liveAds": false
+}
