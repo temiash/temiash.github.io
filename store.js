@@ -4,10 +4,10 @@
    ====================================================================== */
 const REPO = { user: "YOUR_USER", repo: "YOUR_REPO", branch: "main" };   // the only line to edit: your GitHub repository
 // raw.githubusercontent refreshes in ~5 min (admin edits go live fast); jsDelivr is the backup CDN.
-const srcs = f => [`https://raw.githubusercontent.com/${REPO.user}/${REPO.repo}/${REPO.branch}/data/${f}`, `https://cdn.jsdelivr.net/gh/${REPO.user}/${REPO.repo}@${REPO.branch}/data/${f}`];
+const srcs = f => [`https://raw.githubusercontent.com/${REPO.user}/${REPO.repo}/${REPO.branch}/data/${f}`, `https://cdn.jsdelivr.net/gh/${REPO.user}/${REPO.repo}@${REPO.branch}/data/${f}`, `data/${f}`];   // last resort: same-origin copy (GitHub Pages)
 const CONFIG = {
   SOURCES: srcs("addons.json"),
-  CACHE_KEY: "bv_addons_v2", CACHE_TTL: 5 * 60 * 1000,  // 5 min browser cache
+  CACHE_KEY: "bv_addons_v3", CACHE_TTL: 5 * 60 * 1000,  // 5 min browser cache
   PAGE_SIZE: 12, NATIVE_AD_EVERY: 6,
   SUBMIT_URL: "https://github.com/YOUR_USER/YOUR_REPO/issues/new", CONTACT: "legal@YOUR_DOMAIN",
   WALL_SECONDS: 5,          // countdown length (also the simulated ad length)
@@ -28,6 +28,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmt = n => n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e3 ? (n / 1e3).toFixed(n >= 1e5 ? 0 : 1) + "K" : String(n);
 const safeUrl = u => /^https?:\/\//i.test(u || "") ? u : "";   // blocks javascript: URLs from remote JSON
+const tmo = ms => (AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined);
 const hue = s => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 0);
 const stars = r => "★".repeat(Math.round(r)) + "☆".repeat(5 - Math.round(r));
 
@@ -53,7 +54,7 @@ async function loadAddons() {
   if (c && Date.now() - c.t < CONFIG.CACHE_TTL) return c.d;
   for (const url of CONFIG.SOURCES) {
     try {
-      const r = await fetch(url, { signal: AbortSignal.timeout(4000) });
+      const r = await fetch(url, { signal: tmo(4000) });
       if (!r.ok) continue;
       const d = normalize(await r.json());
       if (d.length) { cache.write(d); return d; }
@@ -65,9 +66,43 @@ async function loadAddons() {
 /* ======================================================================
    4. AD LAYER
    ====================================================================== */
+/* ======================================================================
+   BLOG + MICROBLOG: data/posts.json (written by the dashboard)
+   ====================================================================== */
+const imgOk = u => /^(https?:\/\/|media\/)/i.test(u || "") ? u : "";
+const live = p => p.status === "published" && (!p.date || new Date(p.date) <= new Date());   // scheduled posts go live by themselves
+const readTime = t => Math.max(1, Math.round(String(t).split(/\s+/).length / 200));
+const fdate = d => d ? new Date(d).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "";
+async function loadPosts() {
+  for (const url of srcs("posts.json")) {
+    try {
+      const r = await fetch(url, { signal: tmo(4000) }); if (!r.ok) continue;
+      return ((await r.json()).posts || []).filter(p => p && p.content && (p.slug || p.id)).map(p => ({
+        type: p.type === "note" ? "note" : "post", title: String(p.title || ""), slug: String(p.slug || p.id), content: String(p.content), tags: (p.tags || []).slice(0, 5).map(String),
+        excerpt: p.excerpt || String(p.content).replace(/[#*_`>\[\]()!-]/g, "").slice(0, 160), status: p.status || "draft", date: p.date || "", pinned: !!p.pinned, image: imgOk(p.image) }));
+    } catch (e) { /* next source */ }
+  }
+  return [];
+}
+function renderFeed() {
+  const l = S.posts.filter(live).sort((a, b) => (b.pinned | 0) - (a.pinned | 0) || ((+new Date(b.date) || 0) - (+new Date(a.date) || 0)));
+  const tags = [...new Set(l.flatMap(p => p.tags))].sort();
+  $("#feed").classList.toggle("hidden", !l.length);
+  $("#feedTags").innerHTML = ["all", ...tags].map(t => `<button class="ghost" data-tag="${esc(t)}" aria-pressed="${S.tag === t}">${t === "all" ? "All" : "#" + esc(t)}</button>`).join("");
+  $("#feedList").innerHTML = l.filter(p => S.tag === "all" || p.tags.includes(S.tag)).map(p => p.type === "note"
+    ? `<article class="card glass p-4"><div class="text-xs text-gray-400 mb-2">${p.pinned ? "Pinned, " : ""}${fdate(p.date)}</div><div class="md">${md(p.content)}</div></article>`
+    : `<article class="card glass overflow-hidden">${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy" class="w-full h-40 object-cover">` : ""}<div class="p-4"><div class="text-xs text-gray-400">${p.pinned ? "Pinned, " : ""}${fdate(p.date)}, ${readTime(p.content)} min read</div>
+      <h3 class="font-bold text-lg mt-1"><a href="#/post/${encodeURIComponent(p.slug)}" class="hover:text-[#00ff66]">${esc(p.title)}</a></h3><p class="text-sm text-gray-400 mt-1">${esc(p.excerpt)}</p></div></article>`).join("");
+}
+function mountComments(slug) {   // GitHub Discussions comments through giscus (set in dashboard settings)
+  const g = CONFIG.GISCUS; if (!g || !g.repo || !$("#giscus")) return;
+  const s = document.createElement("script");
+  Object.entries({ src: "https://giscus.app/client.js", "data-repo": g.repo, "data-repo-id": g.repoId, "data-category": g.cat, "data-category-id": g.catId, "data-mapping": "specific", "data-term": slug, "data-theme": "dark", crossorigin: "anonymous" }).forEach(([k, v]) => s.setAttribute(k, v));
+  s.async = true; $("#giscus").append(s);
+}
 async function loadPages() {
   for (const url of srcs("pages.json")) {
-    try { const r = await fetch(url, { signal: AbortSignal.timeout(4000) }); if (r.ok) return ((await r.json()).pages || []).filter(p => p && p.slug && p.title); } catch (e) { /* next source */ }
+    try { const r = await fetch(url, { signal: tmo(4000) }); if (r.ok) return ((await r.json()).pages || []).filter(p => p && p.slug && p.title); } catch (e) { /* next source */ }
   }
   return [];
 }
@@ -77,7 +112,7 @@ function renderPages() {
 }
 async function loadSettings() {
   for (const url of srcs("config.json")) {
-    try { const r = await fetch(url, { signal: AbortSignal.timeout(4000) }); if (r.ok) return await r.json(); } catch (e) { /* try next source */ }
+    try { const r = await fetch(url, { signal: tmo(4000) }); if (r.ok) return await r.json(); } catch (e) { /* try next source */ }
   }
   return {};
 }
@@ -88,7 +123,10 @@ function applySettings(c) {
   if (c.nativeSlot) CONFIG.ADS.nativeSlot = c.nativeSlot;
   [["gamTop", "top"], ["gamSide1", "side1"], ["gamSide2", "side2"], ["gamAnchor", "anchor"]].forEach(([k, g]) => { if (c[k]) CONFIG.ADS.gam[g] = c[k]; });
   S.shown = CONFIG.PAGE_SIZE;
-  if (c.siteName) { $("#siteName").textContent = c.siteName; document.title = c.siteName; }
+  if (c.siteName) { $("#siteName").textContent = c.siteName; document.title = DOC_TITLE = c.siteName; }
+  if (c.giscusRepo) CONFIG.GISCUS = { repo: c.giscusRepo, repoId: c.giscusRepoId, cat: c.giscusCategory, catId: c.giscusCategoryId };
+  const items = (c.menu || "Addons | #store\nNews | #feed").split("\n").map(l => l.split("|").map(x => x.trim())).filter(x => x[0] && /^(#|https?:\/\/)/.test(x[1] || ""));
+  $("#menu").innerHTML = items.map(([l, u]) => `<a class="hover:text-white" href="${esc(u)}">${esc(l)}</a>`).join("");
   if (c.heroTitle) $("#heroH1").textContent = c.heroTitle;
   if (c.heroText) $("#heroP").textContent = c.heroText;
   if (c.announcement) { $("#announce").textContent = c.announcement; $("#announce").classList.remove("hidden"); }
@@ -137,7 +175,7 @@ const Ads = {
 /* ======================================================================
    5. STOREFRONT: state, cards, filters
    ====================================================================== */
-const S = { all: [], q: "", cat: "all", sort: "popular", shown: CONFIG.PAGE_SIZE, ed: "all", ver: "all", vonly: false, saved: false };
+const S = { all: [], q: "", cat: "all", sort: "popular", shown: CONFIG.PAGE_SIZE, ed: "all", ver: "all", vonly: false, saved: false, tag: "all", posts: [] };
 const SORT = {
   popular: (a, b) => b.downloads - a.downloads,
   rating: (a, b) => b.rating - a.rating || b.downloads - a.downloads,
@@ -261,12 +299,18 @@ const Consent = {
 };
 
 /* ---- Detail drawer with shareable URLs (#/addon/<id>) ---- */
-const DOC_TITLE = document.title;
+let DOC_TITLE = document.title;
 const Detail = {
   el: $("#drawer"),
   go(id) { location.hash = "/addon/" + encodeURIComponent(id); },
   close() { if (location.hash) history.pushState(null, "", location.pathname + location.search); this.hide(); },
   hide() { this.el.classList.add("hidden"); document.title = DOC_TITLE; },
+  showPost(p) {
+    const first = this.el.classList.contains("hidden"), t = p.title || "Note";
+    $("#dTitle").textContent = t;
+    $("#dBody").innerHTML = `<p class="text-xs text-gray-400">${fdate(p.date)}, ${readTime(p.content)} min read${p.tags.length ? ", " + p.tags.map(x => "#" + esc(x)).join(" ") : ""}</p>${p.image ? `<img src="${esc(p.image)}" alt="" class="w-full rounded">` : ""}<div class="md">${md(p.content)}</div><div id="giscus"></div>`;
+    this.el.classList.remove("hidden"); document.title = t + " | " + DOC_TITLE; if (first) $("#dX").focus(); mountComments(p.slug);
+  },
   showPage(p) {   // CMS pages written in Markdown (data/pages.json)
     const first = this.el.classList.contains("hidden");
     $("#dTitle").textContent = p.title; $("#dBody").innerHTML = `<div class="md">${md(p.content)}</div>`;
@@ -276,6 +320,8 @@ const Detail = {
     const m = location.hash.match(/^#\/addon\/(.+)$/), a = m && S.all.find(x => x.id === decodeURIComponent(m[1]));
     const pm = location.hash.match(/^#\/page\/(.+)$/), pg = pm && (S.pages || []).find(x => x.slug === decodeURIComponent(pm[1]));
     if (pg) return this.showPage(pg);
+    const om = location.hash.match(/^#\/post\/(.+)$/), po = om && S.posts.filter(live).find(x => x.slug === decodeURIComponent(om[1]));
+    if (po) return this.showPost(po);
     a ? this.show(a) : this.hide();
   },
   show(a) {
@@ -341,11 +387,11 @@ document.addEventListener("keydown", e => {
 (async function boot() {
   $("#grid").innerHTML = Array.from({ length: 6 }, () => `<div class="sk h-72 rounded"></div>`).join("");   // skeletons
   setCategory("all");
-  const [cfg, data, pages] = await Promise.all([loadSettings(), loadAddons(), loadPages()]);
-  applySettings(cfg); S.all = data; S.pages = pages; Consent.init();
+  const [cfg, data, pages, posts] = await Promise.all([loadSettings(), loadAddons(), loadPages(), loadPosts()]);
+  applySettings(cfg); S.all = data; S.pages = pages; S.posts = posts; Consent.init();
   const qs = new URLSearchParams(location.search).get("q"); if (qs) { S.q = qs.trim(); $("#q").value = S.q; }
   $("#submit").href = CONFIG.SUBMIT_URL;
-  buildVersions(); setFilters(); renderStats(); renderFeatured(); render(); renderPages(); Detail.route();
+  buildVersions(); setFilters(); renderStats(); renderFeatured(); render(); renderPages(); renderFeed(); Detail.route();
 })();
 
 /* ======================================================================
@@ -356,3 +402,5 @@ let deferredInstall;
 addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferredInstall = e; $("#install").classList.remove("hidden"); });
 addEventListener("appinstalled", () => $("#install").classList.add("hidden"));
 $("#install").addEventListener("click", async () => { if (!deferredInstall) return; deferredInstall.prompt(); await deferredInstall.userChoice; deferredInstall = null; $("#install").classList.add("hidden"); });
+
+document.addEventListener("click", e => { const t = e.target.closest("[data-tag]"); if (t) { S.tag = t.dataset.tag; renderFeed(); } });

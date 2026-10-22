@@ -1,0 +1,61 @@
+{
+ "posts": [
+  {
+   "id": "p1",
+   "type": "post",
+   "title": "Welcome to BlockVault",
+   "slug": "welcome",
+   "content": "## Hello, builders\n\nBlockVault is a **free library** of Minecraft mods and addons.\n\n- Every file is checked before listing\n- New releases land here first\n\n> Tip: follow the notes below for quick updates.",
+   "excerpt": "What BlockVault is and how it works.",
+   "tags": [
+    "news"
+   ],
+   "status": "published",
+   "date": "2026-10-01T09:00:00.000Z",
+   "pinned": true,
+   "author": "Admin",
+   "category": "News",
+   "image": ""
+  },
+  {
+   "id": "p2",
+   "type": "note",
+   "title": "",
+   "slug": "note-1",
+   "content": "Dragon Riders **2.4.1** is out. Fixes the saddle crash on 1.21.",
+   "tags": [
+    "release"
+   ],
+   "status": "published",
+   "date": "2026-10-12T14:30:00.000Z",
+   "pinned": false
+  },
+  {
+   "id": "p3",
+   "type": "note",
+   "title": "",
+   "slug": "note-2",
+   "content": "Server maintenance tonight, downloads stay available.",
+   "tags": [
+    "status"
+   ],
+   "status": "published",
+   "date": "2026-10-20T18:00:00.000Z",
+   "pinned": false
+  },
+  {
+   "id": "p4",
+   "type": "post",
+   "title": "Top 5 shaders for low-end PCs",
+   "slug": "top-shaders",
+   "content": "Coming soon.",
+   "excerpt": "A scheduled article.",
+   "tags": [
+    "guide"
+   ],
+   "status": "published",
+   "date": "2026-12-01T09:00:00.000Z",
+   "pinned": false
+  }
+ ]
+}

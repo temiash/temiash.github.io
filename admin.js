@@ -14,7 +14,7 @@ const AF = [  // one addon
   ["thumb", "Thumbnail image URL", "text"], ["download", "Download URL", "text"], ["description", "Short description (cards and search)", "textarea"], ["content", "Full description (Markdown)", "md"], ["changelog", "What's new (one line each)", "textarea"],
   ["verified", "Verified", "bool"], ["featured", "Featured on the home page", "bool"]];
 const PF = [["title", "Title", "text"], ["slug", "URL slug (empty = from the title)", "text"], ["footer", "Show a link in the site footer", "bool"], ["content", "Content (Markdown)", "md"]];
-const TITLES = { dash: "Dashboard", addons: "Addons", pages: "Pages", config: "Site settings and ads", raw: "Raw JSON", history: "History and restore" };
+const TITLES = { dash: "Dashboard", addons: "Addons", posts: "Posts", media: "Media library", pages: "Pages", config: "Site settings and ads", raw: "Raw JSON", history: "History and restore" };
 const MDB = [["B", "Bold", "**", "**"], ["I", "Italic", "*", "*"], ["H2", "Heading", "\n## ", ""], ["•", "List", "\n- ", ""], ["❝", "Quote", "\n> ", ""], ["</>", "Code", "`", "`"], ["Link", "Link", "[", "](https://)"], ["Img", "Image", "![", "](https://)"], ["—", "Divider", "\n\n---\n", ""]];
 const CF = [  // site settings (data/config.json)
   ["siteName", "Site name", "text"], ["heroTitle", "Home page headline", "text"], ["heroText", "Home page text", "textarea"], ["announcement", "Announcement bar (empty = hidden)", "text"],
@@ -22,23 +22,27 @@ const CF = [  // site settings (data/config.json)
   ["nativeAdEvery", "Native ad after every N cards", "number"], ["pageSize", "Cards per page", "number"], ["liveAds", "Live ads (off = simulated ads)", "bool"],
   ["adsenseClient", "AdSense client ID (ca-pub-...)", "text"], ["nativeSlot", "AdSense native slot ID", "text"], ["gamTop", "Ad Manager unit: top banner", "text"],
   ["gamSide1", "Ad Manager unit: sidebar 300x250", "text"], ["gamSide2", "Ad Manager unit: sidebar 300x600", "text"], ["gamAnchor", "Ad Manager unit: anchor banner", "text"],
-  ["submitUrl", "Submit-addon link", "text"], ["contact", "Takedown contact email", "text"]];
+  ["menu", "Header menu (one per line: Label | link)", "textarea"], ["giscusRepo", "Comments: GitHub repo (owner/name)", "text"], ["giscusRepoId", "Comments: repo ID (from giscus.app)", "text"],
+  ["giscusCategory", "Comments: discussion category", "text"], ["giscusCategoryId", "Comments: category ID", "text"], ["submitUrl", "Submit-addon link", "text"], ["contact", "Takedown contact email", "text"]];
 
 /* ---------- state ---------- */
 let gh = null, tab = "dash", q = "", editing = -1;
-const F = { addons: { path: "data/addons.json", data: [], sha: null, orig: "" }, config: { path: "data/config.json", data: {}, sha: null, orig: "" }, pages: { path: "data/pages.json", data: [], sha: null, orig: "" } };
-const LIST = { addons: 1, pages: 1 };   // files that hold a list
+const F = { addons: { path: "data/addons.json", data: [], sha: null, orig: "" }, config: { path: "data/config.json", data: {}, sha: null, orig: "" }, pages: { path: "data/pages.json", data: [], sha: null, orig: "" }, posts: { path: "data/posts.json", data: [], sha: null, orig: "" } };
+const LIST = { addons: 1, pages: 1, posts: 1 };   // files that hold a list
 const ser = k => JSON.stringify(LIST[k] ? { [k]: F[k].data } : F[k].data, null, 1);
 const dirty = k => ser(k) !== F[k].orig;
 
 /* ---------- GitHub API ---------- */
-const api = (p, o = {}) => fetch(`https://api.github.com/repos/${gh.o}/${gh.r}/${p}`, { ...o, headers: { Authorization: "Bearer " + gh.t, Accept: "application/vnd.github+json", ...o.headers } });
+async function ghErr(r) { let m = ""; try { m = (await r.clone().json()).message; } catch (e) {} return `GitHub error ${r.status}${m ? ": " + m : ""}`; }
+const toLocal = iso => new Date(new Date(iso) - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
+const api = (p, o = {}) => fetch(`https://api.github.com/repos/${gh.o}/${gh.r}${p ? "/" + p : ""}`, { ...o, headers: { Authorization: "Bearer " + gh.t, Accept: "application/vnd.github+json", ...o.headers } });
 async function loadFile(k, ref) {
   const f = F[k], r = await api(`contents/${f.path}?ref=${encodeURIComponent(ref || gh.b)}`);
   if (r.status === 404) { if (!ref) f.sha = null; return LIST[k] ? [] : {}; }   // file does not exist yet: it is created on first publish
-  if (!r.ok) throw new Error("GitHub error " + r.status);
+  if (!r.ok) throw new Error(await ghErr(r));
   const j = await r.json(); if (!ref) f.sha = j.sha;
-  const d = JSON.parse(b64d(j.content));
+  const txt = j.content ? b64d(j.content) : await (await api(`contents/${f.path}?ref=${encodeURIComponent(ref || gh.b)}`, { headers: { Accept: "application/vnd.github.raw+json" } })).text();   // files over 1 MB
+  const d = JSON.parse(txt);
   return LIST[k] ? (Array.isArray(d) ? d : d[k] || []) : d;
 }
 async function connect(g, remember) {
@@ -47,7 +51,7 @@ async function connect(g, remember) {
     const r = await api("");
     if (r.status === 401) throw new Error("GitHub rejected the token. Check that it was copied fully and has not expired.");
     if (r.status === 404) throw new Error("Repository not found, or the token cannot see it.");
-    if (!r.ok) throw new Error("GitHub error " + r.status);
+    if (!r.ok) throw new Error(await ghErr(r));
     if (!(await r.json()).permissions?.push) throw new Error("This token cannot write to the repository. Set Contents to Read and write.");
     for (const k of Object.keys(F)) { F[k].data = await loadFile(k); F[k].orig = ser(k); }
     (remember ? localStorage : sessionStorage).setItem("bv_gh", JSON.stringify(g)); (remember ? sessionStorage : localStorage).removeItem("bv_gh");
@@ -76,7 +80,7 @@ function readForm(root, fs) {
 }
 function status() {   // stats and publish button (safe to call while typing)
   const a = F.addons.data, n = ["addons", "config"].filter(dirty).length;
-  $("#stats").innerHTML = [["Addons", a.length], ["Total downloads", fmt(a.reduce((s, x) => s + (+x.downloads || 0), 0))], ["Verified", a.filter(x => x.verified).length], ["Featured", a.filter(x => x.featured).length]]
+  $("#stats").innerHTML = [["Addons", a.length], ["Total downloads", fmt(a.reduce((s, x) => s + (+x.downloads || 0), 0))], ["Verified", a.filter(x => x.verified).length], ["Featured", a.filter(x => x.featured).length], ["Posts", F.posts.data.filter(p => p.status !== "trash").length]]
     .map(([l, v]) => `<div class="panel p-3"><div class="text-xl font-bold text-[#00ff66]">${v}</div><div class="text-xs text-gray-400">${l}</div></div>`).join("");
   $("#pub").disabled = !n; $("#pub").textContent = n ? `Publish ${n} changed file${n > 1 ? "s" : ""}` : "Nothing to publish";
 }
@@ -86,10 +90,12 @@ function draw() {
   document.querySelectorAll("[data-pane]").forEach(p => p.classList.toggle("hidden", p.dataset.pane !== tab));
   $("#pageTitle").textContent = TITLES[tab];
   if (tab === "dash") drawDash();
+  if (tab === "posts") drawPosts();
+  if (tab === "media") drawMedia();
   if (tab === "pages") drawPages();
   if (tab === "addons") drawTable();
   if (tab === "config") $("#cfg").innerHTML = CF.map(f => field(f, F.config.data[f[0]])).join("");
-  if (tab === "raw") { $("#raw_addons").value = ser("addons"); $("#raw_config").value = ser("config"); $("#raw_pages").value = ser("pages"); }
+  if (tab === "raw") { $("#raw_addons").value = ser("addons"); $("#raw_config").value = ser("config"); $("#raw_pages").value = ser("pages"); $("#raw_posts").value = ser("posts"); }
   if (tab === "history") drawHist();
 }
 function drawTable() {
@@ -141,7 +147,7 @@ function drawDash() {
   const r = [...F.addons.data].sort((a, b) => (b.updated || "") > (a.updated || "") ? 1 : -1).slice(0, 6), c = F.config.data, p = F.pages.data;
   $("#recent").innerHTML = r.map(a => `<li class="flex justify-between py-2 border-t border-white/10"><span>${esc(a.title)}</span><span class="text-gray-500 text-xs">${esc(a.updated || "")}</span></li>`).join("") || `<li class="text-gray-400 py-2">Nothing yet.</li>`;
   const todo = [[p.some(x => /privacy/i.test(x.slug + x.title)), "Publish a Privacy Policy page (ad networks require one)"], [p.some(x => /takedown|dmca/i.test(x.slug + x.title)), "Publish a takedown page for authors"],
-    [!!c.adsenseClient, "Add your AdSense client ID in Settings"], [!!c.liveAds, "Turn on live ads in Settings"], [F.addons.data.length >= 10, "List at least 10 real addons"]];
+    [!!c.adsenseClient, "Add your AdSense client ID in Settings"], [!!c.liveAds, "Turn on live ads in Settings"], [F.addons.data.length >= 10, "List at least 10 real addons"], [F.posts.data.some(p => p.status === "published"), "Publish your first post or note"]];
   $("#todo").innerHTML = todo.map(([ok, t]) => `<li class="py-1.5">${ok ? "✓" : "○"} <span class="${ok ? "text-gray-500 line-through" : ""}">${t}</span></li>`).join("");
 }
 
@@ -178,6 +184,76 @@ document.addEventListener("click", e => {
   ta.setRangeText(m[2] + (ta.value.slice(s, en) || "text") + m[3], s, en, "select"); ta.focus(); mdPrev(w);
 });
 
+/* ---------- posts: articles and microblog notes ---------- */
+const PO = [["title", "Title (notes may leave it empty)", "text"], ["slug", "URL slug (empty = from the title)", "text"], ["type", "Type", "select", ["post", "note"]], ["status", "Status", "select", ["draft", "published"]],
+  ["date", "Publish date and time (a future date schedules it)", "datetime-local"], ["category", "Category", "text"], ["tags", "Tags (comma separated, max 5)", "text"], ["author", "Author", "text"],
+  ["image", "Featured image (media/... or https://...)", "text"], ["excerpt", "Excerpt (optional)", "textarea"], ["pinned", "Pin to the top", "bool"], ["content", "Content (Markdown)", "md"]];
+let pf = "all", pq = "";
+const pstatus = p => p.status === "published" && new Date(p.date) > new Date() ? "scheduled" : p.status || "draft";
+function drawPosts() {
+  const P = F.posts.data, cnt = s => P.filter(p => s === "all" ? p.status !== "trash" : pstatus(p) === s).length;
+  $("#pstat").innerHTML = ["all", "published", "draft", "scheduled", "trash"].map(s => `<button class="ghost" data-pf="${s}" aria-pressed="${pf === s}">${s[0].toUpperCase() + s.slice(1)} (${cnt(s)})</button>`).join("");
+  const l = P.map((p, i) => [p, i]).filter(([p]) => (pf === "all" ? p.status !== "trash" : pstatus(p) === pf) && (!pq || ((p.title || "") + p.content + (p.tags || []).join(" ")).toLowerCase().includes(pq)))
+    .sort((x, y) => (+new Date(y[0].date) || 0) - (+new Date(x[0].date) || 0));
+  $("#porows").innerHTML = l.map(([p, i]) => `<tr><td><input type="checkbox" class="psel" data-i="${i}" aria-label="Select"></td><td class="font-semibold">${p.pinned ? "📌 " : ""}${esc(p.title || p.content.slice(0, 60))}<div class="text-xs text-gray-500">${esc(p.slug || "")}</div></td>
+    <td>${p.type === "note" ? "Note" : "Article"}</td><td>${pstatus(p)}</td><td class="text-xs">${esc((p.date || "").slice(0, 16).replace("T", " "))}</td>
+    <td class="whitespace-nowrap"><button class="ghost" data-act="poedit" data-i="${i}">Edit</button> <button class="ghost" data-act="poclone" data-i="${i}">Clone</button>${p.status === "trash" ? ` <button class="ghost" data-act="porest" data-i="${i}">Restore</button>` : ""}</td></tr>`).join("")
+    || `<tr><td colspan="6" class="text-gray-400 py-8 text-center">Nothing here yet.</td></tr>`;
+}
+function openPost(i) {
+  formKind = "post"; editing = i; $("#ferr").textContent = "";
+  const p = i >= 0 ? { ...F.posts.data[i] } : { type: "post", status: "draft", pinned: false, content: "" };
+  p.tags = (p.tags || []).join(", "); p.date = toLocal(p.date || new Date().toISOString());
+  $("#fbody").innerHTML = PO.map(f => field(f, p[f[0]])).join(""); $("#ftitle").textContent = i >= 0 ? "Edit post" : "New post";
+  $("#form").classList.remove("hidden"); document.querySelectorAll(".mded").forEach(mdPrev);
+}
+function savePost() {
+  const o = readForm($("#fbody"), PO), bad = m => { $("#ferr").textContent = m; };
+  if (!o.content) return bad("Write some content first.");
+  if (o.type === "post" && !o.title) return bad("Articles need a title.");
+  if (o.image && !/^(https?:\/\/|media\/)/i.test(o.image)) return bad("The image must start with media/ or https://");
+  o.slug = (o.slug || o.title || o.content.slice(0, 40)).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "post-" + Date.now().toString(36);
+  if (F.posts.data.some((p, i) => p.slug === o.slug && i !== editing)) o.slug += "-" + Date.now().toString(36);
+  o.tags = o.tags.split(",").map(s => s.trim().toLowerCase()).filter(Boolean).slice(0, 5);
+  o.date = o.date ? new Date(o.date).toISOString() : new Date().toISOString(); o.updated = new Date().toISOString();
+  const n = { id: "p" + Date.now().toString(36), ...(editing >= 0 ? F.posts.data[editing] : {}), ...o };
+  editing >= 0 ? F.posts.data[editing] = n : F.posts.data.push(n);
+  $("#form").classList.add("hidden"); draw();
+}
+$("#addpost").addEventListener("click", () => openPost(-1));
+$("#pq").addEventListener("input", e => { pq = e.target.value.trim().toLowerCase(); drawPosts(); });
+$("#pall").addEventListener("change", e => document.querySelectorAll(".psel").forEach(c => { c.checked = e.target.checked; }));
+$("#applybulk").addEventListener("click", () => {
+  const act = $("#bulk").value, sel = [...document.querySelectorAll(".psel:checked")].map(c => +c.dataset.i); if (!act || !sel.length) return;
+  if (act === "delete") { if (!confirm(`Permanently delete ${sel.length} item(s)?`)) return; F.posts.data = F.posts.data.filter((_, i) => !sel.includes(i)); }
+  else sel.forEach(i => { const p = F.posts.data[i]; if (act === "pin") p.pinned = !p.pinned; else p.status = act; });
+  $("#bulk").value = ""; draw();
+});
+$("#qn").addEventListener("input", e => { $("#qnc").textContent = e.target.value.length + " / 500"; });
+$("#qnp").addEventListener("click", () => {          // dashboard quick note = microblog post
+  const t = $("#qn").value.trim(); if (!t) return; const now = new Date().toISOString();
+  F.posts.data.push({ id: "p" + Date.now().toString(36), type: "note", title: "", slug: "note-" + Date.now().toString(36), content: t, tags: [], status: "published", date: now, updated: now, pinned: false });
+  $("#qn").value = ""; $("#qnc").textContent = "0 / 500"; draw(); toast("Note added. Press Publish to put it live.");
+});
+
+/* ---------- media library (images committed to /media in the repository) ---------- */
+async function drawMedia() {
+  const el = $("#mgrid"); el.innerHTML = `<p class="text-gray-400">Loading...</p>`;
+  const r = await api(`contents/media?ref=${encodeURIComponent(gh.b)}`), l = r.ok ? (await r.json()).filter(f => /\.(png|jpe?g|gif|webp|svg)$/i.test(f.name)) : [];
+  el.innerHTML = l.map(f => `<div class="panel p-2 text-xs"><img src="${esc(f.download_url)}" alt="" class="w-full h-24 object-cover rounded" loading="lazy"><div class="truncate mt-1">${esc(f.name)}</div>
+    <div class="flex gap-1 mt-1"><button class="ghost" data-act="mcopy" data-n="${esc(f.name)}">Copy Markdown</button><button class="ghost" data-act="mdel" data-n="${esc(f.name)}" data-sha="${f.sha}">Delete</button></div></div>`).join("") || `<p class="text-gray-400">No images yet.</p>`;
+}
+$("#up").addEventListener("change", async e => {
+  for (const f of e.target.files) {
+    const b64 = await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.readAsDataURL(f); });
+    const name = f.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
+    const x = await api("contents/media/" + name, { method: "PUT", body: JSON.stringify({ message: "Upload " + name, content: b64, branch: gh.b }) });
+    toast(x.ok ? "Uploaded " + name : await ghErr(x), !x.ok);
+  }
+  e.target.value = ""; drawMedia();
+});
+addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key === "s" && gh) { e.preventDefault(); if (!$("#pub").disabled) publish(); } });
+
 /* ---------- publish: one commit per changed file ---------- */
 async function publish() {
   const msg = $("#msg").value.trim() || "Update store data from BlockVault Admin"; $("#pub").disabled = true;
@@ -187,7 +263,7 @@ async function publish() {
       const f = F[k], txt = ser(k);
       const r = await api("contents/" + f.path, { method: "PUT", body: JSON.stringify({ message: msg, content: b64e(txt + "\n"), branch: gh.b, ...(f.sha ? { sha: f.sha } : {}) }) });
       if (r.status === 409 || r.status === 422) throw new Error(f.path + " changed on GitHub after you opened it. Reload this page and repeat your edit.");
-      if (!r.ok) throw new Error("GitHub error " + r.status);
+      if (!r.ok) throw new Error(await ghErr(r));
       f.sha = (await r.json()).content.sha; f.orig = txt;
     }
     toast("Published. The live store picks it up within about 5 minutes.");
@@ -205,12 +281,18 @@ function applyRaw(k) {
 
 /* ---------- events ---------- */
 document.addEventListener("click", async e => {
-  const t = e.target.closest("[data-act],[data-tab]"); if (!t) return;
+  const t = e.target.closest("[data-act],[data-tab],[data-pf]"); if (!t) return;
   if (t.dataset.tab) { tab = t.dataset.tab; draw(); return; }
+  if (t.dataset.pf) { pf = t.dataset.pf; drawPosts(); return; }
   const i = +t.dataset.i, a = F.addons.data[i];
   if (t.dataset.act === "edit") openForm(i);
   if (t.dataset.act === "del" && confirm(`Delete "${a.title}"? You can bring it back from History.`)) { F.addons.data.splice(i, 1); draw(); }
   if (t.dataset.act === "raw") applyRaw(t.dataset.k);
+  if (t.dataset.act === "poedit") openPost(i);
+  if (t.dataset.act === "poclone") { const c = { ...F.posts.data[i], id: "p" + Date.now().toString(36), title: (F.posts.data[i].title || "") + " (copy)", slug: F.posts.data[i].slug + "-copy-" + Date.now().toString(36), status: "draft" }; F.posts.data.push(c); draw(); }
+  if (t.dataset.act === "porest") { F.posts.data[i].status = "draft"; draw(); }
+  if (t.dataset.act === "mcopy") { navigator.clipboard && navigator.clipboard.writeText(`![${t.dataset.n}](media/${t.dataset.n})`); toast("Markdown copied. Paste it into a post."); }
+  if (t.dataset.act === "mdel" && confirm(`Delete ${t.dataset.n} from the repository?`)) { const x = await api("contents/media/" + t.dataset.n, { method: "DELETE", body: JSON.stringify({ message: "Delete " + t.dataset.n, sha: t.dataset.sha, branch: gh.b }) }); toast(x.ok ? "Deleted." : await ghErr(x), !x.ok); drawMedia(); }
   if (t.dataset.act === "pedit") openPage(i);
   if (t.dataset.act === "pdel" && confirm(`Delete the page "${F.pages.data[i].title}"?`)) { F.pages.data.splice(i, 1); draw(); }
   if (t.dataset.act === "restore") { try { F[t.dataset.k].data = await loadFile(t.dataset.k, t.dataset.ref); draw(); toast("Loaded into the editor. Press Publish to make it live."); } catch (x) { toast(x.message, true); } }
@@ -219,7 +301,7 @@ document.addEventListener("change", e => { const t = e.target, k = t.dataset.act
 $("#cfg").addEventListener("input", () => { F.config.data = Object.fromEntries(Object.entries(readForm($("#cfg"), CF)).filter(([, v]) => v !== "")); status(); });
 $("#q").addEventListener("input", e => { q = e.target.value.trim().toLowerCase(); drawTable(); });
 $("#add").addEventListener("click", () => openForm(-1));
-$("#fs").addEventListener("click", () => formKind === "page" ? savePage() : saveForm());
+$("#fs").addEventListener("click", () => formKind === "page" ? savePage() : formKind === "post" ? savePost() : saveForm());
 $("#addp").addEventListener("click", () => openPage(-1));
 ["fx", "fc"].forEach(id => $("#" + id).addEventListener("click", () => $("#form").classList.add("hidden")));
 $("#pub").addEventListener("click", publish);

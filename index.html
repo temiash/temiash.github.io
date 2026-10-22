@@ -38,6 +38,7 @@
 <header class="sticky top-0 z-40 glass border-x-0 border-t-0">
   <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
     <a href="#" class="brand text-xl font-bold flex items-center gap-2"><span class="stat w-8 h-8 grid place-items-center text-base">⛏️</span><span id="siteName">BlockVault</span></a>
+    <nav id="menu" class="hidden md:flex gap-4 text-sm text-gray-300 ml-2"></nav>
 
     <div class="order-3 md:order-none w-full md:w-auto md:flex-1 md:max-w-md md:mx-4">
       <input id="q" type="search" placeholder="Search addons, authors, tags (press / )" aria-label="Search"
@@ -106,6 +107,11 @@
     <div id="gpt-side-2" class="slot w-[300px] h-[600px] rounded">Advertisement 300×600</div>
   </div></aside>
 </main>
+
+<section id="feed" class="max-w-7xl mx-auto px-4 mt-16 hidden">
+  <div class="flex flex-wrap items-end justify-between gap-3 mb-4"><h2 class="text-2xl font-bold">News and notes</h2><div id="feedTags" class="flex flex-wrap gap-2 text-sm"></div></div>
+  <div id="feedList" class="grid md:grid-cols-2 gap-4"></div>
+</section>
 
 <footer class="max-w-7xl mx-auto px-4 mt-16 py-8 border-t border-white/10 text-sm text-gray-500">
   BlockVault is not affiliated with Mojang Studios or Microsoft. Minecraft is a trademark of Mojang AB. Authors can request removal of their work via the contact page.

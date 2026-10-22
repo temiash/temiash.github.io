@@ -35,7 +35,7 @@
   <aside class="side">
     <div class="brandrow">⛏️ BlockVault</div>
     <nav>
-      <button class="tab" data-tab="dash">Dashboard</button><button class="tab" data-tab="addons">Addons</button><button class="tab" data-tab="pages">Pages</button>
+      <button class="tab" data-tab="dash">Dashboard</button><button class="tab" data-tab="addons">Addons</button><button class="tab" data-tab="posts">Posts</button><button class="tab" data-tab="media">Media</button><button class="tab" data-tab="pages">Pages</button>
       <button class="tab" data-tab="config">Settings and ads</button><button class="tab" data-tab="raw">Raw JSON</button><button class="tab" data-tab="history">History</button>
     </nav>
     <div id="repo" class="repo"></div>
@@ -49,7 +49,8 @@
     </header>
     <main class="content">
       <section data-pane="dash" class="space-y-5">
-        <div id="stats" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+        <div id="stats" class="grid grid-cols-2 md:grid-cols-5 gap-3"></div>
+        <div class="panel p-4"><h3 class="font-bold mb-2">Quick note</h3><textarea id="qn" rows="3" maxlength="500" class="in" placeholder="What is new? Markdown works."></textarea><div class="flex items-center justify-between mt-2"><span id="qnc" class="text-xs text-gray-500">0 / 500</span><button id="qnp" class="btn">Post note</button></div></div>
         <div class="grid md:grid-cols-2 gap-4">
           <div class="panel p-4"><h3 class="font-bold mb-2">Recently updated</h3><ul id="recent" class="text-sm"></ul></div>
           <div class="panel p-4"><h3 class="font-bold mb-2">Launch checklist</h3><ul id="todo" class="text-sm"></ul></div>
@@ -65,6 +66,18 @@
         <div class="panel overflow-x-auto"><table class="w-full text-sm"><thead><tr><th>Addon</th><th>Category</th><th>Version</th><th>Downloads</th><th>Rating</th><th>Verified</th><th>Featured</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
       </section>
 
+      <section data-pane="posts">
+        <div class="flex flex-wrap items-center gap-2 mb-3"><button id="addpost" class="btn">New post</button><div id="pstat" class="flex flex-wrap gap-1"></div>
+          <input id="pq" class="in" style="max-width:200px" placeholder="Search posts" aria-label="Search posts">
+          <select id="bulk" class="in" style="max-width:170px" aria-label="Bulk action"><option value="">Bulk actions</option><option value="published">Publish</option><option value="draft">Move to drafts</option><option value="pin">Pin or unpin</option><option value="trash">Move to trash</option><option value="delete">Delete permanently</option></select><button id="applybulk" class="ghost">Apply</button></div>
+        <div class="panel overflow-x-auto"><table class="w-full text-sm"><thead><tr><th><input type="checkbox" id="pall" aria-label="Select all"></th><th>Title</th><th>Type</th><th>Status</th><th>Date</th><th></th></tr></thead><tbody id="porows"></tbody></table></div>
+      </section>
+
+      <section data-pane="media">
+        <div class="mb-3 flex flex-wrap gap-3 items-center"><label class="btn cursor-pointer">Upload images<input id="up" type="file" accept="image/*" multiple class="hidden"></label><span class="text-sm text-gray-400">Uploads are committed straight to the media folder of your repository.</span></div>
+        <div id="mgrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3"></div>
+      </section>
+
       <section data-pane="pages">
         <div class="mb-3"><button id="addp" class="btn">Add page</button></div>
         <div class="panel overflow-x-auto"><table class="w-full text-sm"><thead><tr><th>Title</th><th>Link</th><th>In footer</th><th>Updated</th><th></th></tr></thead><tbody id="prows"></tbody></table></div>
@@ -72,10 +85,11 @@
 
       <section data-pane="config"><div id="cfg" class="panel p-5 grid sm:grid-cols-2 gap-3"></div><p class="text-xs text-gray-500 mt-2">Empty fields use the store's defaults. Changes go live after you press Publish.</p></section>
 
-      <section data-pane="raw" class="grid lg:grid-cols-3 gap-4">
+      <section data-pane="raw" class="grid lg:grid-cols-2 gap-4">
         <div><h3 class="font-bold mb-1">data/addons.json</h3><textarea id="raw_addons" rows="18" class="in font-mono text-xs" spellcheck="false"></textarea><button class="ghost mt-2" data-act="raw" data-k="addons">Apply</button></div>
         <div><h3 class="font-bold mb-1">data/config.json</h3><textarea id="raw_config" rows="18" class="in font-mono text-xs" spellcheck="false"></textarea><button class="ghost mt-2" data-act="raw" data-k="config">Apply</button></div>
         <div><h3 class="font-bold mb-1">data/pages.json</h3><textarea id="raw_pages" rows="18" class="in font-mono text-xs" spellcheck="false"></textarea><button class="ghost mt-2" data-act="raw" data-k="pages">Apply</button></div>
+      <div><h3 class="font-bold mb-1">data/posts.json</h3><textarea id="raw_posts" rows="18" class="in font-mono text-xs" spellcheck="false"></textarea><button class="ghost mt-2" data-act="raw" data-k="posts">Apply</button></div>
       </section>
 
       <section data-pane="history"><div id="hist"></div></section>
